@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "truffle": "^5.1.67",
+    "truffle-hdwallet-provider": "^1.0.6"
+  }
+}
