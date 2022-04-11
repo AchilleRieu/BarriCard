@@ -18,6 +18,7 @@ abstract contract BarriCard is ERC721, Ownable {
         bool isInDeck;
     }
 
+
     Card[] public cards;
 
     mapping (uint8 => address) public cardToOwner;
