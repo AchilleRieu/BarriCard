@@ -13,7 +13,7 @@ abstract contract BarriCard is ERC721, Ownable {
     constructor() ERC721("","") {}
 
     struct Card {
-        uint8 id;
+        uint id;
         uint8 puissance;
         bool isInDeck;
     }
@@ -21,20 +21,31 @@ abstract contract BarriCard is ERC721, Ownable {
 
     Card[] public cards;
 
-    mapping (uint8 => address) public cardToOwner;
+    mapping (uint => address) public cardToOwner;
     mapping (address => uint8) ownerCardCount;
     mapping (address => uint8) ownerCardInDeckCount;
 
-    function addCardInDeck() public { //passer une carte en parametre
-        //Check si ownerCardInDeckCount est plus petit que 10 (taille max du deck)
-        //Passer la variable isInDeck de la carte à False (revient a supprimer la carte du Deck)
-        //decrementer ownerCardInDeckCount de 1
+    modifier onlyOwnerOf(uint _cardId) {
+        require(msg.sender == cardToOwner[_cardId]);
+        _;
     }
 
-    function removeCardInDeck() public { //passer une carte en parametre
-        //Check si ownerCardInDeckCount est plus grand que 0 (taille min du deck)
+    function addCardInDeck(uint _cardId) external onlyOwnerOf(_cardId){ //passer une carte en parametre
+        //Check si ownerCardInDeckCount est plus petit que 10 (taille max du deck)
         //Passer la variable isInDeck à True (revient a ajouter la carte au Deck)
         //incrementer ownerCardInDeckCount de 1
+        require(ownerCardInDeckCount[msg.sender]<10);
+        cards[_cardId].isInDeck = true;
+        ownerCardInDeckCount[msg.sender]++;
+    }
+
+    function removeCardInDeck(uint _cardId) external onlyOwnerOf(_cardId) { //passer une carte en parametre
+        //Check si ownerCardInDeckCount est plus grand que 0 (taille min du deck)
+        //Passer la variable isInDeck de la carte à False (revient a supprimer la carte du Deck)
+        //decrementer ownerCardInDeckCount de 1
+        require(ownerCardInDeckCount[msg.sender]>0);
+        cards[_cardId].isInDeck = false;
+        ownerCardInDeckCount[msg.sender]--;
     }
 
     //problème : pour afficher les cartes du Deck c'est compliqué (il faut parcourir toutes les cartes 
