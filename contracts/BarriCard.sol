@@ -69,5 +69,29 @@ abstract contract BarriCard is ERC721, Ownable {
         //  (voir pour modifier un variable globale, peut etre plus securisé)
 
     }
+
+    function getCardsByOwner(address _owner) external view returns(uint[] memory) {
+        uint[] memory result = new uint[](ownerCardCount[_owner]);
+        uint counter = 0;
+        for (uint i = 0; i < cards.length; i++) {
+            if (cardToOwner[i] == _owner) {
+                result[counter] = i;
+                counter++;
+            }
+        }
+        return result;
+    }
+
+    function getCardsInDeckByOwner(address _owner) external view returns(uint[] memory) {
+        uint[] memory result = new uint[](ownerCardInDeckCount[_owner]);
+        uint counter = 0;
+        for (uint i = 0; i < cards.length; i++) {
+            if (cardToOwner[i] == _owner && cards[i].isInDeck == true) {
+                result[counter] = i;
+                counter++;
+            }
+        }
+        return result;
+    }
 }
 
