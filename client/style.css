@@ -2,12 +2,12 @@
     margin-bottom: 20px;
   }
   
-  #tickets {
+  #cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
   }
   
-  .ticket {
+  .card {
     display: inline-block;
     margin-bottom: 20px;
   }

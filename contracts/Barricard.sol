@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./safemath.sol";
 
 
-contract Barricard is ERC721 {
+contract Barricard is ERC721, Ownable {
     constructor() ERC721("","") {}
 
     struct Card {
@@ -156,15 +156,10 @@ contract Barricard is ERC721 {
     emit NewCard(1,8,false);
   }
 
-  function _generateRandomPuissance(string memory _str) private view returns (uint) {
-    uint rand = uint(keccak256(abi.encodePacked(_str)));
-    return rand % puissanceModulus;
-  }
 
-  function createRandomCard(string memory _name) public {
+
+  function createRandomCard() public {
     require(ownerCardCount[msg.sender] == 0);
-    uint randPuissance = _generateRandomPuissance(_name);
-    randPuissance = randPuissance - randPuissance % 100;
     _createCard();
   }
 
