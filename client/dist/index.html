@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Barricard front-end</title>
+    <script language="javascript" src="/index.de337801.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <div id="txStatus"></div>
+    <div id="Cards"></div>
+
+    <script>var Contract;
+var userAccount;
+function startApp() {
+    const CONTRACT_ADDRESS = configuration.address;
+    const CONTRACT_ABI = configuration.abi;
+    const web3 = new Web3(Web3.givenProvider || 'http://127.0.0.1:8545');
+    const Contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+    //Pour voir si le compte Metamask a changé
+    var accountInterval = setInterval(function() {
+        // Check if account has changed
+        if (web3.eth.accounts[0] !== userAccount) {
+            userAccount = web3.eth.accounts[0];
+            // Call a function to update the UI with the new account
+            getCardsByOwner(userAccount).then(displayCards);
+        }
+    }, 100);
+// Start here
+}
+function displayCards(ids) {
+    $("#Cards").empty();
+    for (id of ids)// Look up zombie details from our contract. Returns a `zombie` object
+    getCardDetails(id).then(function(card) {
+        // Using ES6's "template literals" to inject variables into the HTML.
+        // Append each one to our #zombies div
+        $("#cards").append(`<div class="card">
+              <ul>
+                <li>Id: ${card.id}</li>
+                <li>Puissance: ${card.puissance}</li>
+              </ul>
+            </div>`);
+    });
+}
+/*
+      function createRandomZombie(name) {
+        // This is going to take a while, so update the UI to let the user know
+        // the transaction has been sent
+        $("#txStatus").text("Creating new zombie on the blockchain. This may take a while...");
+        // Send the tx to our contract:
+        return Contract.methods.createRandomZombie(name)
+        .send({ from: userAccount })
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Successfully created " + name + "!");
+          // Transaction was accepted into the blockchain, let's redraw the UI
+          getCardsByOwner(userAccount).then(displayCards);
+        })
+        .on("error", function(error) {
+          // Do something to alert the user their transaction has failed
+          $("#txStatus").text(error);
+        });
+      }
+
+      function feedOnKitty(zombieId, kittyId) {
+        $("#txStatus").text("Eating a kitty. This may take a while...");
+        return Contract.methods.feedOnKitty(zombieId, kittyId)
+        .send({ from: userAccount })
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Ate a kitty and spawned a new Zombie!");
+          getCardsByOwner(userAccount).then(displayCards);
+        })
+        .on("error", function(error) {
+          $("#txStatus").text(error);
+        });
+      }
+
+      function levelUp(zombieId) {
+        $("#txStatus").text("Leveling up your zombie...");
+        return Contract.methods.levelUp(zombieId)
+        .send({ from: userAccount, value: web3.utils.toWei("0.001", "ether") })
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Power overwhelming! Zombie successfully leveled up");
+        })
+        .on("error", function(error) {
+          $("#txStatus").text(error);
+        });
+      }
+*/ function getCardDetails(id) {
+    return Contract.methods.cards(id).call();
+}
+function CardToOwner(id) {
+    return Contract.methods.CardToOwner(id).call();
+}
+function getCardsByOwner(owner) {
+    return Contract.methods.getCardsByOwner(owner).call();
+}
+window.addEventListener('load', function() {
+    // Now you can start your app & access web3 freely:
+    startApp();
+});
+
+</script>
+  </body>
+</html>
