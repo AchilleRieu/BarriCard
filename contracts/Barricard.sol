@@ -36,6 +36,13 @@ contract Barricard is ERC721, Ownable {
         require(msg.sender == cardToOwner[_cardId]);
         _;
     }
+    function numberOfCards() public view returns(uint256) {
+        return cards.length;
+    }
+
+    function getValueAtOwnerToWin(address _address) public view returns(uint8) {
+        return OwnerToWin[_address];
+}
 
     function addCardInDeck(uint _cardId) external onlyOwnerOf(_cardId){ //passer une carte en parametre
         //Check si ownerCardInDeckCount est plus petit que 10 (taille max du deck)
@@ -156,10 +163,9 @@ contract Barricard is ERC721, Ownable {
     emit NewCard(1,8,false);
   }
 
-
-
-  function createRandomCard() public {
-    require(ownerCardCount[msg.sender] == 0);
+  function createRandomCard() payable public {
+    //require(ownerCardCount[msg.sender] == 0);
+    require(msg.value>=1000);
     _createCard();
   }
 
