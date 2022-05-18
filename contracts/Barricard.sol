@@ -13,7 +13,8 @@ import "./safemath.sol";
 
 contract Barricard is ERC721, Ownable {
     constructor() ERC721("","") {}
-
+    
+    //Creating the Card struct
     struct Card {
         uint id;
         uint8 puissance;
