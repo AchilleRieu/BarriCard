@@ -12,7 +12,6 @@ import "./safemath.sol";
 
 
 contract Barricard is ERC721, Ownable {
-    address payable private owner;
 
     struct Card {
         uint id;
@@ -33,7 +32,6 @@ contract Barricard is ERC721, Ownable {
     mapping (uint => address) CardApprovals;
 
     constructor() ERC721("","") {
-        owner = payable(msg.sender);
     }
 
     modifier onlyOwnerOf(uint _cardId) {
@@ -168,7 +166,7 @@ contract Barricard is ERC721, Ownable {
     }
 
     function kill() public onlyOwner {
-        selfdestruct(owner);
+        selfdestruct(payable(owner()));
     }
 
 }
