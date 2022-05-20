@@ -12,17 +12,17 @@ import "./safemath.sol";
 
 
 contract Barricard is ERC721, Ownable {
-    constructor() ERC721("","") {}
+    address payable private owner;
 
     struct Card {
         uint id;
         uint8 puissance;
         bool isInDeck;
     }
-  using SafeMath for uint256;
-  using SafeMath32 for uint32;
-  using SafeMath16 for uint16;
 
+    using SafeMath for uint256;
+    using SafeMath32 for uint32;
+    using SafeMath16 for uint16;
 
     Card[] public cards;
 
@@ -31,6 +31,10 @@ contract Barricard is ERC721, Ownable {
     mapping (address => uint8) ownerCardInDeckCount;
     mapping (address => uint8) OwnerToWin;
     mapping (uint => address) CardApprovals;
+
+    constructor() ERC721("","") {
+        owner = payable(msg.sender);
+    }
 
     modifier onlyOwnerOf(uint _cardId) {
         require(msg.sender == cardToOwner[_cardId]);
@@ -55,16 +59,16 @@ contract Barricard is ERC721, Ownable {
         ownerCardInDeckCount[msg.sender]--;
     }
 
-      function approve(address _approved, uint256 _cardId) public override onlyOwnerOf(_cardId) {
-      CardApprovals[_cardId] = _approved;
-      emit Approval(msg.sender, _approved, _cardId);
-    }
+    // function approve(address _approved, uint256 _cardId) public override onlyOwnerOf(_cardId) {
+    //     CardApprovals[_cardId] = _approved;
+    //     emit Approval(msg.sender, _approved, _cardId);
+    // }
 
-    function takeOwnership(uint256 _cardId) public {
-    require(CardApprovals[_cardId] == msg.sender);
-    address owner = ownerOf(_cardId);
-    _transfer(owner, msg.sender, _cardId);
-  }
+    // function takeOwnership(uint256 _cardId) public {
+    //     require(CardApprovals[_cardId] == msg.sender);
+    //     address owner = ownerOf(_cardId);
+    //     _transfer(owner, msg.sender, _cardId);
+    // }
 
     //problème : pour afficher les cartes du Deck c'est compliqué (il faut parcourir toutes les cartes 
     //  et selectionner seulement celles qui ont isInDeck a True
@@ -86,7 +90,7 @@ contract Barricard is ERC721, Ownable {
         return a <= b ? a : b;
     }
 
- function _cardBattle(address adrj1, address adrj2) external { //address des deux joueurs 
+    function _cardBattle(address adrj1, address adrj2) external { //address des deux joueurs 
         // Variable interne : compteur de point pour chaque joueur
 
         //boucle x10 (ou max du nombre de carte dans les decks)
@@ -143,24 +147,28 @@ contract Barricard is ERC721, Ownable {
         return result;
     }
 
-  event NewCard(uint _id,uint8 _puissance, bool _isInDeck);
-  uint puissanceDigits = 16;
-  uint puissanceModulus = 10 ** puissanceDigits;
+    event NewCard(uint _id,uint8 _puissance, bool _isInDeck);
+    uint puissanceDigits = 16;
+    uint puissanceModulus = 10 ** puissanceDigits;
 
 
-  function _createCard() internal {
-    cards.push(Card(1,8,false));
-    uint id = cards.length - 1;
-    cardToOwner[id] = msg.sender;
-    ownerCardCount[msg.sender] ++;
-    emit NewCard(1,8,false);
-  }
+    function _createCard() internal {
+        cards.push(Card(1,8,false));
+        uint id = cards.length - 1;
+        cardToOwner[id] = msg.sender;
+        ownerCardCount[msg.sender] ++;
+        emit NewCard(1,8,false);
+    }
 
 
 
-  function createRandomCard() public {
-    require(ownerCardCount[msg.sender] == 0);
-    _createCard();
-  }
+    function createRandomCard() public {
+        require(ownerCardCount[msg.sender] == 0);
+        _createCard();
+    }
+
+    function kill() public onlyOwner {
+        selfdestruct(owner);
+    }
 
 }
