@@ -48,6 +48,7 @@ contract Barricard is ERC721, Ownable {
         //Passer la variable isInDeck à True (revient a ajouter la carte au Deck)
         //incrementer ownerCardInDeckCount de 1
         require(ownerCardInDeckCount[msg.sender]<10);
+        require(cards[_cardId].isInDeck = false);
         cards[_cardId].isInDeck = true;
         ownerCardInDeckCount[msg.sender]++;
     }
@@ -57,6 +58,7 @@ contract Barricard is ERC721, Ownable {
         //Passer la variable isInDeck de la carte à False (revient a supprimer la carte du Deck)
         //decrementer ownerCardInDeckCount de 1
         require(ownerCardInDeckCount[msg.sender]>0);
+        require(cards[_cardId].isInDeck = true);
         cards[_cardId].isInDeck = false;
         ownerCardInDeckCount[msg.sender]--;
     }
