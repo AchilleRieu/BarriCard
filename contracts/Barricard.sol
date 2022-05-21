@@ -111,9 +111,9 @@ contract Barricard is ERC721, Ownable {
         //  (voir pour modifier un variable globale, peut etre plus securisé)
 
         uint[] memory deck1 = getCardsInDeckByOwner(adrj1);
-        _cardShuffle(deck1);
+        deck1 = _cardShuffle(deck1);
         uint[] memory deck2 = getCardsInDeckByOwner(adrj2);
-        _cardShuffle(deck2);
+        deck2 = _cardShuffle(deck2);
 
         int8 score = 0;
 
