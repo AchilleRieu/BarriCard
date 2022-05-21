@@ -151,14 +151,12 @@ contract Barricard is ERC721, Ownable {
 
 
     function _createCard() internal {
-        cards.push(Card(1,8,false));
-        uint id = cards.length - 1;
+        uint id = cards.length;
+        cards.push(Card(id,8,false));
         cardToOwner[id] = msg.sender;
         ownerCardCount[msg.sender] ++;
-        emit NewCard(1,8,false);
+        emit NewCard(id,8,false);
     }
-
-
 
     function createRandomCard() public {
         require(ownerCardCount[msg.sender] == 0);
