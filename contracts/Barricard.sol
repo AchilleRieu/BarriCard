@@ -80,7 +80,7 @@ contract Barricard is ERC721, Ownable {
 
     //problème : pour afficher les cartes du Deck c'est compliqué (il faut parcourir toutes les cartes 
     //  et selectionner seulement celles qui ont isInDeck a True
-    function _cardShuffle(uint[] memory deck) internal view {
+    function _cardShuffle(uint[] memory deck) public view returns(uint[] memory) { //repasser en internal
         //Deux possibilites
         //ajouter un variable à la structure de Card pour indiquer son rang dans le deck
         //ne pas ecrire cette fonction et effectuer le choix aleatoire pdt cardBattle 
@@ -93,8 +93,11 @@ contract Barricard is ERC721, Ownable {
             deck[n] = deck[i];
             deck[i] = temp;
         }
+
+        return(deck);
     }
-     function min(uint256 a, uint256 b) internal pure returns (uint256) {
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a <= b ? a : b;
     }
 
@@ -143,7 +146,7 @@ contract Barricard is ERC721, Ownable {
         return result;
     }
 
-    function getCardsInDeckByOwner(address _owner) internal view returns(uint[] memory) {
+    function getCardsInDeckByOwner(address _owner) public view returns(uint[] memory) { //changer public
         uint[] memory result = new uint[](ownerCardInDeckCount[_owner]);
         uint counter = 0;
         for (uint i = 0; i < cards.length; i++) {
@@ -164,7 +167,8 @@ contract Barricard is ERC721, Ownable {
     }
 
     function createRandomCard() public {
-        require(ownerCardCount[msg.sender] == 0);
+        
+        //require(ownerCardCount[msg.sender] == 0);
         _createCard();
     }
 
