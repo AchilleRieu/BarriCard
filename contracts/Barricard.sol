@@ -25,6 +25,10 @@ contract Barricard is ERC721, Ownable {
 
     Card[] public cards;
 
+    event NewCard(uint _id,uint8 _puissance, bool _isInDeck);
+    uint puissanceDigits = 16;
+    uint puissanceModulus = 10 ** puissanceDigits;
+
     mapping (uint => address) public cardToOwner;
     mapping (address => uint8) ownerCardCount;
     mapping (address => uint8) ownerCardInDeckCount;
@@ -55,6 +59,10 @@ contract Barricard is ERC721, Ownable {
         require(ownerCardInDeckCount[msg.sender]>0);
         cards[_cardId].isInDeck = false;
         ownerCardInDeckCount[msg.sender]--;
+    }
+
+    function getIsInDeck(uint _cardId) external view onlyOwnerOf(_cardId) returns(bool) {
+        return(cards[_cardId].isInDeck);
     }
 
     // function approve(address _approved, uint256 _cardId) public override onlyOwnerOf(_cardId) {
@@ -144,11 +152,6 @@ contract Barricard is ERC721, Ownable {
         }
         return result;
     }
-
-    event NewCard(uint _id,uint8 _puissance, bool _isInDeck);
-    uint puissanceDigits = 16;
-    uint puissanceModulus = 10 ** puissanceDigits;
-
 
     function _createCard() internal {
         uint id = cards.length;
