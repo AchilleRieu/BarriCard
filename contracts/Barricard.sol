@@ -102,11 +102,8 @@ contract Barricard is ERC721, Ownable {
         return a <= b ? a : b;
     }
 
-    function battleApproval(address adrj) public {
-        BattleApprovals[msg.sender][adrj] = true;
-    }
-
     function _cardBattle(address adrj) public{ //address des deux joueurs 
+        BattleApprovals[msg.sender][adrj] = true;
         require(BattleApprovals[adrj][msg.sender] == true);
         BattleApprovals[adrj][msg.sender] = false;
         BattleApprovals[msg.sender][adrj] = false;
