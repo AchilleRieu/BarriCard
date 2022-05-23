@@ -30,9 +30,9 @@ contract Barricard is ERC721, Ownable {
     uint puissanceModulus = 10 ** puissanceDigits;
 
     mapping (uint => address) public cardToOwner;
+     mapping (address => uint8) public OwnerToWin;
     mapping (address => uint8) ownerCardCount;
     mapping (address => uint8) ownerCardInDeckCount;
-    mapping (address => uint8) OwnerToWin;
     mapping (uint => address) CardApprovals;
 
     constructor() ERC721("","") {
@@ -101,7 +101,7 @@ contract Barricard is ERC721, Ownable {
         return a <= b ? a : b;
     }
 
-    function _cardBattle(address adrj1, address adrj2) external { //address des deux joueurs 
+    function _cardBattle(address adrj1, address adrj2) public{ //address des deux joueurs 
         // Variable interne : compteur de point pour chaque joueur
 
         //boucle x10 (ou max du nombre de carte dans les decks)
@@ -118,10 +118,10 @@ contract Barricard is ERC721, Ownable {
         int8 score = 0;
 
         for (uint i = 0; i < min(deck1.length, deck2.length); i++){
-            if (deck1[i]>deck2[i]) {
+            if (cards[deck1[i]].puissance>cards[deck2[i]].puissance) { //On pourrait directement melanger les puissances au lieu des indices
                 score++;
             }
-            else if (deck1[i]<deck2[i]){
+            else if (cards[deck1[i]].puissance<cards[deck2[i]].puissance){
                 score--;
             }
         }
@@ -158,18 +158,19 @@ contract Barricard is ERC721, Ownable {
         return result;
     }
 
-    function _createCard() internal {
+    function _createCard(uint8 puissance) public { //repasser en internal
         uint id = cards.length;
-        cards.push(Card(id,8,false));
+        cards.push(Card(id,puissance,false));
         cardToOwner[id] = msg.sender;
         ownerCardCount[msg.sender] ++;
-        emit NewCard(id,8,false);
+        emit NewCard(id,puissance,false);
     }
 
     function createRandomCard() public {
         
         //require(ownerCardCount[msg.sender] == 0);
-        _createCard();
+        uint8 puissance = uint8(uint256(keccak256(abi.encodePacked(block.timestamp))) % 256);
+        _createCard(puissance);
     }
 
     function kill() public onlyOwner {
