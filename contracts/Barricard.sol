@@ -30,10 +30,11 @@ contract Barricard is ERC721, Ownable {
     uint puissanceModulus = 10 ** puissanceDigits;
 
     mapping (uint => address) public cardToOwner;
-     mapping (address => uint8) public OwnerToWin;
+    mapping (address => uint8) public OwnerToWin;
     mapping (address => uint8) ownerCardCount;
     mapping (address => uint8) ownerCardInDeckCount;
     mapping (uint => address) CardApprovals;
+    mapping (address => mapping(address => bool)) BattleApprovals;
 
     constructor() ERC721("","") {
     }
@@ -101,7 +102,14 @@ contract Barricard is ERC721, Ownable {
         return a <= b ? a : b;
     }
 
-    function _cardBattle(address adrj1, address adrj2) public{ //address des deux joueurs 
+    function battleApproval(address adrj) public {
+        BattleApprovals[msg.sender][adrj] = true;
+    }
+
+    function _cardBattle(address adrj) public{ //address des deux joueurs 
+        require(BattleApprovals[adrj][msg.sender] == true);
+        BattleApprovals[adrj][msg.sender] = false;
+        BattleApprovals[msg.sender][adrj] = false;
         // Variable interne : compteur de point pour chaque joueur
 
         //boucle x10 (ou max du nombre de carte dans les decks)
@@ -110,9 +118,9 @@ contract Barricard is ERC721, Ownable {
         //Retourner le resultat du match 
         //  (voir pour modifier un variable globale, peut etre plus securisé)
 
-        uint[] memory deck1 = getCardsInDeckByOwner(adrj1);
+        uint[] memory deck1 = getCardsInDeckByOwner(msg.sender);
         deck1 = _cardShuffle(deck1);
-        uint[] memory deck2 = getCardsInDeckByOwner(adrj2);
+        uint[] memory deck2 = getCardsInDeckByOwner(adrj);
         deck2 = _cardShuffle(deck2);
 
         int8 score = 0;
@@ -127,10 +135,10 @@ contract Barricard is ERC721, Ownable {
         }
 
         if (score>0){
-            OwnerToWin[adrj1]++;
+            OwnerToWin[msg.sender]++;
         }
         else if (score<0) {
-            OwnerToWin[adrj2]++;
+            OwnerToWin[adrj]++;
         }
     }
 
