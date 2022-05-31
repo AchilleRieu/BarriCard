@@ -168,10 +168,17 @@ contract Barricard is ERC721, Ownable {
 
     function _createCard(uint8 puissance) public { //repasser en internal
         uint id = cards.length;
-        cards.push(Card(id,puissance,false));
         cardToOwner[id] = msg.sender;
         ownerCardCount[msg.sender] ++;
-        emit NewCard(id,puissance,false);
+        if(ownerCardInDeckCount[msg.sender]<10){
+            cards.push(Card(id,puissance,true));
+            ownerCardInDeckCount[msg.sender] ++;
+            emit NewCard(id,puissance,true);
+        }
+        else{
+            cards.push(Card(id,puissance,false));
+            emit NewCard(id,puissance,false);
+        }
     }
 
     function createRandomCard() public {
