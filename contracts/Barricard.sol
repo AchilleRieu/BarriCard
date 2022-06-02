@@ -34,7 +34,7 @@ contract Barricard is ERC721, Ownable {
     mapping (address => uint8) ownerCardCount;
     mapping (address => uint8) ownerCardInDeckCount;
     mapping (uint => address) CardApprovals;
-    mapping (address => mapping(address => bool)) BattleApprovals;
+    mapping (address => mapping(address => bool)) public BattleApprovals;
 
     constructor() ERC721("","") {
     }
@@ -103,7 +103,13 @@ contract Barricard is ERC721, Ownable {
     }
 
     function battleApproval(address adrj) public {
+        require(BattleApprovals[msg.sender][adrj] == false);
         BattleApprovals[msg.sender][adrj] = true;
+    }
+
+    function battleDisapproval(address adrj) public {
+        require(BattleApprovals[msg.sender][adrj] == true);
+        BattleApprovals[msg.sender][adrj] = false;
     }
 
     function _cardBattle(address adrj) public{ //address des deux joueurs 
