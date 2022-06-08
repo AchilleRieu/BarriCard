@@ -15,17 +15,17 @@ contract("Barricard", (accounts) => {
     await contractInstance.kill();
   });
 
-  xit("should be able to create a new card", async () => {
+  it("should be able to create a new card", async () => {
     const result = await contractInstance._createCard(8, { from: alice });
     assert.equal(result.receipt.status, true);
-    assert.equal(result.logs[0].args._id, 0);
-    assert.equal(result.logs[0].args._isInDeck, true);
+    assert.equal(result.logs[0].args.tokenId, 0);
+    //assert.equal(result.logs[0].args._isInDeck, true); ajouter une fonction getter pour cette valeur
   });
 
-  xit("should be able to remove and add a card to the deck", async () => {
+  it("should be able to remove and add a card to the deck", async () => {
     let CardIsInDeck;
     const result = await contractInstance.createRandomCard({ from: alice });
-    const firstCardId = result.logs[0].args._id.toNumber();
+    const firstCardId = result.logs[0].args.tokenId.toNumber();
     CardIsInDeck = await contractInstance.getIsInDeck(firstCardId);
     assert.equal(CardIsInDeck, true);
     await contractInstance.removeCardInDeck(firstCardId, { from: alice });
@@ -38,9 +38,9 @@ contract("Barricard", (accounts) => {
     // tester si le nombre de cartes dans le deck est le bon
   });
 
-  xit("should not be able to add a card to the deck", async () => {
+  it("should not be able to add a card to the deck", async () => {
     const result = await contractInstance.createRandomCard({ from: alice });
-    const firstCardId = result.logs[0].args._id.toNumber();
+    const firstCardId = result.logs[0].args.tokenId.toNumber();
     utils.shouldThrow(
       contractInstance.addCardInDeck(firstCardId, { from: bob })
     );
@@ -51,9 +51,9 @@ contract("Barricard", (accounts) => {
     // tester si on ne peut pas ajouter plus de 10 cartes
   });
 
-  xit("should not be able to remove a card to the deck", async () => {
+  it("should not be able to remove a card to the deck", async () => {
     const result = await contractInstance.createRandomCard({ from: alice });
-    const firstCardId = result.logs[0].args._id.toNumber();
+    const firstCardId = result.logs[0].args.tokenId.toNumber();
     utils.shouldThrow(
       contractInstance.removeCardInDeck(firstCardId, { from: bob })
     );
@@ -63,7 +63,7 @@ contract("Barricard", (accounts) => {
     );
   });
 
-  xit("should be able to shuffle the deck", async () => {
+  it("should be able to shuffle the deck", async () => {
     let result;
     result = await contractInstance.createRandomCard({ from: alice });
     result = await contractInstance.createRandomCard({ from: alice });

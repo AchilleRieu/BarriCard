@@ -25,22 +25,19 @@ contract Barricard is ERC721, Ownable {
 
     Card[] public cards;
 
-    event NewCard(uint _id,uint8 _puissance, bool _isInDeck);
     uint puissanceDigits = 16;
     uint puissanceModulus = 10 ** puissanceDigits;
 
-    mapping (uint => address) public cardToOwner;
     mapping (address => uint8) public OwnerToWin;
-    mapping (address => uint8) ownerCardCount;
     mapping (address => uint8) ownerCardInDeckCount;
     mapping (uint => address) CardApprovals;
     mapping (address => mapping(address => bool)) public BattleApprovals;
 
-    constructor() ERC721("","") {
+    constructor() ERC721("Card","BCD") {
     }
 
     modifier onlyOwnerOf(uint _cardId) {
-        require(msg.sender == cardToOwner[_cardId]);
+        require(msg.sender == ownerOf(_cardId));
         _;
     }
 
@@ -149,10 +146,10 @@ contract Barricard is ERC721, Ownable {
     }
 
     function getCardsByOwner(address _owner) external view returns(uint[] memory) {
-        uint[] memory result = new uint[](ownerCardCount[_owner]);
+        uint[] memory result = new uint[](balanceOf(_owner));
         uint counter = 0;
         for (uint i = 0; i < cards.length; i++) {
-            if (cardToOwner[i] == _owner) {
+            if (ownerOf(i) == _owner) {
                 result[counter] = i;
                 counter++;
             }
@@ -164,7 +161,7 @@ contract Barricard is ERC721, Ownable {
         uint[] memory result = new uint[](ownerCardInDeckCount[_owner]);
         uint counter = 0;
         for (uint i = 0; i < cards.length; i++) {
-            if (cardToOwner[i] == _owner && cards[i].isInDeck == true) {
+            if (ownerOf(i) == _owner && cards[i].isInDeck == true) {
                 result[counter] = i;
                 counter++;
             }
@@ -174,22 +171,17 @@ contract Barricard is ERC721, Ownable {
 
     function _createCard(uint8 puissance) public { //repasser en internal
         uint id = cards.length;
-        cardToOwner[id] = msg.sender;
-        ownerCardCount[msg.sender] ++;
+        _mint(msg.sender, id);
         if(ownerCardInDeckCount[msg.sender]<10){
             cards.push(Card(id,puissance,true));
-            ownerCardInDeckCount[msg.sender] ++;
-            emit NewCard(id,puissance,true);
+            ownerCardInDeckCount[msg.sender] ++; // penser a modifier cette variable lors des tranferts
         }
         else{
             cards.push(Card(id,puissance,false));
-            emit NewCard(id,puissance,false);
         }
     }
 
     function createRandomCard() public {
-        
-        //require(ownerCardCount[msg.sender] == 0);
         uint8 puissance = uint8(uint256(keccak256(abi.encodePacked(block.timestamp))) % 256);
         _createCard(puissance);
     }
