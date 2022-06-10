@@ -140,7 +140,7 @@ contract("Barricard", (accounts) => {
     assert.equal(bobWin.toNumber(), 0);
   });
 
-  it("should not be able to play the game", async () => {
+  xit("should not be able to play the game", async () => {
     let result;
 
     //Alice Deck creation
@@ -164,7 +164,11 @@ contract("Barricard", (accounts) => {
         from: alice,
       });
       const newOwner = await contractInstance.ownerOf(cardId);
+      const isCardInDeck = await contractInstance.getIsInDeck(cardId, {
+        from: bob,
+      });
       assert.equal(newOwner, bob);
+      assert.equal(isCardInDeck, false);
     });
   });
 
@@ -175,7 +179,11 @@ contract("Barricard", (accounts) => {
       await contractInstance.approve(bob, cardId, { from: alice });
       await contractInstance.transferFrom(alice, bob, cardId, { from: bob });
       const newOwner = await contractInstance.ownerOf(cardId);
+      const isCardInDeck = await contractInstance.getIsInDeck(cardId, {
+        from: bob,
+      });
       assert.equal(newOwner, bob);
+      assert.equal(isCardInDeck, false);
     });
     it("should approve and then transfer a card when the owner calls transferFrom", async () => {
       const result = await contractInstance._createCard(7, { from: alice });
@@ -185,7 +193,11 @@ contract("Barricard", (accounts) => {
         from: alice,
       });
       const newOwner = await contractInstance.ownerOf(cardId);
+      const isCardInDeck = await contractInstance.getIsInDeck(cardId, {
+        from: bob,
+      });
       assert.equal(newOwner, bob);
+      assert.equal(isCardInDeck, false);
     });
   });
 });

@@ -41,24 +41,32 @@ contract Barricard is ERC721, Ownable {
         _;
     }
 
-    function addCardInDeck(uint _cardId) external onlyOwnerOf(_cardId){ //passer une carte en parametre
+    function addCardInDeck(uint _cardId) public onlyOwnerOf(_cardId){ //passer une carte en parametre
         //Check si ownerCardInDeckCount est plus petit que 10 (taille max du deck)
         //Passer la variable isInDeck à True (revient a ajouter la carte au Deck)
         //incrementer ownerCardInDeckCount de 1
         require(ownerCardInDeckCount[msg.sender]<10);
         require(cards[_cardId].isInDeck == false);
-        cards[_cardId].isInDeck = true;
-        ownerCardInDeckCount[msg.sender]++;
+        _addCardInDeck(_cardId, msg.sender);
     }
 
-    function removeCardInDeck(uint _cardId) external onlyOwnerOf(_cardId) { //passer une carte en parametre
+    function _addCardInDeck(uint _cardId, address cardOwner) internal {
+        cards[_cardId].isInDeck = true;
+        ownerCardInDeckCount[cardOwner]++;
+    }
+
+    function removeCardInDeck(uint _cardId) public onlyOwnerOf(_cardId) { //passer une carte en parametre
         //Check si ownerCardInDeckCount est plus grand que 0 (taille min du deck)
         //Passer la variable isInDeck de la carte à False (revient a supprimer la carte du Deck)
         //decrementer ownerCardInDeckCount de 1
         require(ownerCardInDeckCount[msg.sender]>0);
         require(cards[_cardId].isInDeck == true);
+        _removeCardInDeck(_cardId, msg.sender);
+    }
+
+    function _removeCardInDeck(uint _cardId, address cardOwner) internal {
         cards[_cardId].isInDeck = false;
-        ownerCardInDeckCount[msg.sender]--;
+        ownerCardInDeckCount[cardOwner]--;
     }
 
     function getIsInDeck(uint _cardId) external view onlyOwnerOf(_cardId) returns(bool) {
@@ -179,6 +187,18 @@ contract Barricard is ERC721, Ownable {
         else{
             cards.push(Card(id,puissance,false));
         }
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override {
+        //solhint-disable-next-line max-line-length
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
+
+        _removeCardInDeck(tokenId, from);
+        _transfer(from, to, tokenId);
     }
 
     function createRandomCard() public {
