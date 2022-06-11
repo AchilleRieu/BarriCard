@@ -1,5 +1,5 @@
 import React from 'react'
-import Transfer from './Transfer'
+
 //import Navigation from './Navigation'
 //simport {Link} from 'react-router-dom'
 
