@@ -12,70 +12,81 @@ import "./safemath.sol";
 
 
 contract Barricard is ERC721, Ownable {
-    constructor() ERC721("","") {}
 
     struct Card {
         uint id;
         uint8 puissance;
         bool isInDeck;
     }
-  using SafeMath for uint256;
-  using SafeMath32 for uint32;
-  using SafeMath16 for uint16;
 
+    using SafeMath for uint256;
+    using SafeMath32 for uint32;
+    using SafeMath16 for uint16;
 
     Card[] public cards;
 
-    mapping (uint => address) public cardToOwner;
-    mapping (address => uint8) ownerCardCount;
+    uint puissanceDigits = 16;
+    uint puissanceModulus = 10 ** puissanceDigits;
+
+    mapping (address => uint8) public OwnerToWin;
     mapping (address => uint8) ownerCardInDeckCount;
-    mapping (address => uint8) OwnerToWin;
     mapping (uint => address) CardApprovals;
+    mapping (address => mapping(address => bool)) public BattleApprovals;
+
+    constructor() ERC721("Card","BCD") {
+    }
 
     modifier onlyOwnerOf(uint _cardId) {
-        require(msg.sender == cardToOwner[_cardId]);
+        require(msg.sender == ownerOf(_cardId));
         _;
     }
-    function numberOfCards() public view returns(uint256) {
-        return cards.length;
-    }
 
-    function getValueAtOwnerToWin(address _address) public view returns(uint8) {
-        return OwnerToWin[_address];
-}
-
-    function addCardInDeck(uint _cardId) external onlyOwnerOf(_cardId){ //passer une carte en parametre
+    function addCardInDeck(uint _cardId) public onlyOwnerOf(_cardId){ //passer une carte en parametre
         //Check si ownerCardInDeckCount est plus petit que 10 (taille max du deck)
         //Passer la variable isInDeck à True (revient a ajouter la carte au Deck)
         //incrementer ownerCardInDeckCount de 1
         require(ownerCardInDeckCount[msg.sender]<10);
-        cards[_cardId].isInDeck = true;
-        ownerCardInDeckCount[msg.sender]++;
+        require(cards[_cardId].isInDeck == false);
+        _addCardInDeck(_cardId, msg.sender);
     }
 
-    function removeCardInDeck(uint _cardId) external onlyOwnerOf(_cardId) { //passer une carte en parametre
+    function _addCardInDeck(uint _cardId, address cardOwner) internal {
+        cards[_cardId].isInDeck = true;
+        ownerCardInDeckCount[cardOwner]++;
+    }
+
+    function removeCardInDeck(uint _cardId) public onlyOwnerOf(_cardId) { //passer une carte en parametre
         //Check si ownerCardInDeckCount est plus grand que 0 (taille min du deck)
         //Passer la variable isInDeck de la carte à False (revient a supprimer la carte du Deck)
         //decrementer ownerCardInDeckCount de 1
         require(ownerCardInDeckCount[msg.sender]>0);
+        require(cards[_cardId].isInDeck == true);
+        _removeCardInDeck(_cardId, msg.sender);
+    }
+
+    function _removeCardInDeck(uint _cardId, address cardOwner) internal {
         cards[_cardId].isInDeck = false;
-        ownerCardInDeckCount[msg.sender]--;
+        ownerCardInDeckCount[cardOwner]--;
     }
 
-      function approve(address _approved, uint256 _cardId) public override onlyOwnerOf(_cardId) {
-      CardApprovals[_cardId] = _approved;
-      emit Approval(msg.sender, _approved, _cardId);
+    function getIsInDeck(uint _cardId) external view onlyOwnerOf(_cardId) returns(bool) {
+        return(cards[_cardId].isInDeck);
     }
 
-    function takeOwnership(uint256 _cardId) public {
-    require(CardApprovals[_cardId] == msg.sender);
-    address owner = ownerOf(_cardId);
-    _transfer(owner, msg.sender, _cardId);
-  }
+    // function approve(address _approved, uint256 _cardId) public override onlyOwnerOf(_cardId) {
+    //     CardApprovals[_cardId] = _approved;
+    //     emit Approval(msg.sender, _approved, _cardId);
+    // }
+
+    // function takeOwnership(uint256 _cardId) public {
+    //     require(CardApprovals[_cardId] == msg.sender);
+    //     address owner = ownerOf(_cardId);
+    //     _transfer(owner, msg.sender, _cardId);
+    // }
 
     //problème : pour afficher les cartes du Deck c'est compliqué (il faut parcourir toutes les cartes 
     //  et selectionner seulement celles qui ont isInDeck a True
-    function _cardShuffle(uint[] memory deck) internal view {
+    function _cardShuffle(uint[] memory deck) public view returns(uint[] memory) { //repasser en internal
         //Deux possibilites
         //ajouter un variable à la structure de Card pour indiquer son rang dans le deck
         //ne pas ecrire cette fonction et effectuer le choix aleatoire pdt cardBattle 
@@ -88,12 +99,28 @@ contract Barricard is ERC721, Ownable {
             deck[n] = deck[i];
             deck[i] = temp;
         }
+
+        return(deck);
     }
-     function min(uint256 a, uint256 b) internal pure returns (uint256) {
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a <= b ? a : b;
     }
 
- function _cardBattle(address adrj1, address adrj2) external { //address des deux joueurs 
+    function battleApproval(address adrj) public {
+        require(BattleApprovals[msg.sender][adrj] == false);
+        BattleApprovals[msg.sender][adrj] = true;
+    }
+
+    function battleDisapproval(address adrj) public {
+        require(BattleApprovals[msg.sender][adrj] == true);
+        BattleApprovals[msg.sender][adrj] = false;
+    }
+
+    function _cardBattle(address adrj) public{ //address des deux joueurs 
+        require(BattleApprovals[adrj][msg.sender] == true);
+        BattleApprovals[adrj][msg.sender] = false;
+        BattleApprovals[msg.sender][adrj] = false;
         // Variable interne : compteur de point pour chaque joueur
 
         //boucle x10 (ou max du nombre de carte dans les decks)
@@ -102,35 +129,35 @@ contract Barricard is ERC721, Ownable {
         //Retourner le resultat du match 
         //  (voir pour modifier un variable globale, peut etre plus securisé)
 
-        uint[] memory deck1 = getCardsInDeckByOwner(adrj1);
-        _cardShuffle(deck1);
-        uint[] memory deck2 = getCardsInDeckByOwner(adrj2);
-        _cardShuffle(deck2);
+        uint[] memory deck1 = getCardsInDeckByOwner(msg.sender);
+        deck1 = _cardShuffle(deck1);
+        uint[] memory deck2 = getCardsInDeckByOwner(adrj);
+        deck2 = _cardShuffle(deck2);
 
         int8 score = 0;
 
         for (uint i = 0; i < min(deck1.length, deck2.length); i++){
-            if (deck1[i]>deck2[i]) {
+            if (cards[deck1[i]].puissance>cards[deck2[i]].puissance) { //On pourrait directement melanger les puissances au lieu des indices
                 score++;
             }
-            else if (deck1[i]<deck2[i]){
+            else if (cards[deck1[i]].puissance<cards[deck2[i]].puissance){
                 score--;
             }
         }
 
         if (score>0){
-            OwnerToWin[adrj1]++;
+            OwnerToWin[msg.sender]++;
         }
         else if (score<0) {
-            OwnerToWin[adrj2]++;
+            OwnerToWin[adrj]++;
         }
     }
 
     function getCardsByOwner(address _owner) external view returns(uint[] memory) {
-        uint[] memory result = new uint[](ownerCardCount[_owner]);
+        uint[] memory result = new uint[](balanceOf(_owner));
         uint counter = 0;
         for (uint i = 0; i < cards.length; i++) {
-            if (cardToOwner[i] == _owner) {
+            if (ownerOf(i) == _owner) {
                 result[counter] = i;
                 counter++;
             }
@@ -138,11 +165,11 @@ contract Barricard is ERC721, Ownable {
         return result;
     }
 
-    function getCardsInDeckByOwner(address _owner) internal view returns(uint[] memory) {
+    function getCardsInDeckByOwner(address _owner) public view returns(uint[] memory) { //changer public
         uint[] memory result = new uint[](ownerCardInDeckCount[_owner]);
         uint counter = 0;
         for (uint i = 0; i < cards.length; i++) {
-            if (cardToOwner[i] == _owner && cards[i].isInDeck == true) {
+            if (ownerOf(i) == _owner && cards[i].isInDeck == true) {
                 result[counter] = i;
                 counter++;
             }
@@ -150,23 +177,37 @@ contract Barricard is ERC721, Ownable {
         return result;
     }
 
-  event NewCard(uint _id,uint8 _puissance, bool _isInDeck);
-  uint puissanceDigits = 16;
-  uint puissanceModulus = 10 ** puissanceDigits;
+    function _createCard(uint8 puissance) public { //repasser en internal
+        uint id = cards.length;
+        _mint(msg.sender, id);
+        if(ownerCardInDeckCount[msg.sender]<10){
+            cards.push(Card(id,puissance,true));
+            ownerCardInDeckCount[msg.sender] ++; // penser a modifier cette variable lors des tranferts
+        }
+        else{
+            cards.push(Card(id,puissance,false));
+        }
+    }
 
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override {
+        //solhint-disable-next-line max-line-length
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
 
-  function _createCard() internal {
-    cards.push(Card(1,8,false));
-    uint id = cards.length - 1;
-    cardToOwner[id] = msg.sender;
-    ownerCardCount[msg.sender] ++;
-    emit NewCard(1,8,false);
-  }
+        _removeCardInDeck(tokenId, from);
+        _transfer(from, to, tokenId);
+    }
 
-  function createRandomCard() payable public {
-    //require(ownerCardCount[msg.sender] == 0);
-    require(msg.value>=1000);
-    _createCard();
-  }
+    function createRandomCard() public {
+        uint8 puissance = uint8(uint256(keccak256(abi.encodePacked(block.timestamp))) % 256);
+        _createCard(puissance);
+    }
+
+    function kill() public onlyOwner {
+        selfdestruct(payable(owner()));
+    }
 
 }

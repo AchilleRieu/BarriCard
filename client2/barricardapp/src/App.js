@@ -1,12 +1,15 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createElement } from 'react';
 import Web3 from 'web3';
+import 'bootstrap/dist/css/bootstrap.css';
 import {CONTRACT_ABI, CONTRACT_ADDRESS} from './config.js';
+import Header from './Header.js';
 
 
 function App(){
 
   //On défini tous les états ou on peut stocker des var globale
+
   const [currentAccount, setCurrentAccount] = useState(null);
   const [ numberOfCards = 1 ] = useState(null);
   const {ethereum} = window;
@@ -17,7 +20,69 @@ function App(){
   const Contract = new web3.eth.Contract(CONTRACT_ABI,CONTRACT_ADDRESS );
 
 
+  const CardsEl = document.getElementById('cards');
+  const CardsInDeckEl = document.getElementById('cards');
+
+
+
+  /*  Fonctions pou raffihcer les cartes du joueur et lui permettre d'intéragir avec */
+
+  const createElementFromString = (string) => {
+    const el = document.createElement('div');
+    el.innerHTML = string;
+    return el.firstChild;
+  };
   
+  const refreshCards = async () => {
+    CardsEl.innerHTML = '';
+    CardsInDeckEl.innerHTML = '';
+    const CardsOfOwner = await Contract.methods.getCardsByOwner(currentAccount).call();
+    for (let i = 0; i < CardsOfOwner.length; i++) {
+      const card = await Contract.methods.cards(CardsOfOwner[i]).call();
+      card.id = CardsOfOwner[i];
+        if (CardsOfOwner.length===0){
+        console.log("PAS DE CARTES");}
+        if (card.isInDeck === true){
+          {
+        const CardEl = createElementFromString(
+          `<div class="card" style="width: 18rem; ">
+           <div class="card-body">
+            <h5 class="card-title">Id of Card : ${
+              card.id
+            }</h5>
+            <p class="card-text">Power of Card : ${
+              card.isInDeck
+            } </p>
+             <button id="btn" href="#" class="btn btn-primary">Add in Deck</button>
+            </div>
+        </div>`
+        );
+        CardEl.onclick = removeCardInDeck.bind(null, card.id);
+        CardsEl.appendChild(CardEl);   
+    }
+  }
+        else {
+        {
+        const CardEl = createElementFromString( 
+        `<div class="cardsss" style="width: 10rem; ">
+          <div class="card-body">
+          <h5 class="card-title">Id of Card : ${
+            card.id
+          }</h5>
+          <p class="card-text">Power of Card : ${
+            card.isInDeck
+          } </p>
+            <button id="btn" href="#" class="btn btn-primary">Remove from Deck</button>
+          </div>
+      </div>`
+     );
+     CardEl.onclick = addCardInDeck.bind(null, card.id);
+     CardsInDeckEl.appendChild(CardEl);
+        }
+  
+        }
+      }
+  };
 
   //Vérifie que l'utilisateur a bien Metamask et qu'on a trouvé son compte
   const connectWalletHandler = async () => {
@@ -28,7 +93,7 @@ function App(){
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' }); //permet de request le compte connecté
       console.log("Found an account! Address: ", accounts[0]);
       setCurrentAccount(accounts[0]); // On met le compte actuel dans une le state global "CurrentAccount
- //à l'aide de useState
+      //à l'aide de useState
     } catch (err) {
       console.log(err)
     }
@@ -43,33 +108,56 @@ function App(){
 
   
   const getCardsByOwner = async (owner) => {
-     const CardsByOwner = await Contract.methods.getCardsByOwner(owner).call({ from: currentAccount})
+     const CardsByOwner = await Contract.methods.getCardsByOwner(owner).call()
      console.log('Your Cards : ', CardsByOwner)
   }
 
   const getWinsByOwner = async (owner) => {
-    const WinsByOwner = await Contract.methods.getValueAtOwnerToWin(owner).call({from: currentAccount})
-    console.log('Your Cards : ', WinsByOwner)
+    const WinsByOwner = await Contract.methods.OwnerToWin(owner).call()
+    console.log('Nombre win du currentAccount : ', WinsByOwner)
  }
   const MintNewCard = async () => {
-    const mintonecard = await Contract.methods.createRandomCard().send({ from: currentAccount, value : 1000});
-    const numberOfCards = await Contract.methods.numberOfCards().call({ from: currentAccount});
-    console.log('Number of card minted : ', numberOfCards);
+    await Contract.methods.createRandomCard().send({ from: currentAccount});
+    /*
+    const NewCardEvent = await Contract.events.NewCard({fromBlock : 0})
+    .on('data', async function(event){
+        console.log(event.returnValues);
+        // Do something here
+    })
+    .on('error', console.error);
+    refreshCards();*/
   }
 
   const addCardInDeck = async(Id) => {
-     await Contract.methods.addCardInDeck(Id).send({ from: currentAccount});
-    const IsInDeck = await Contract.methods.cards(Id).call();
-    console.log('Votre carte est dans le Deck : ', IsInDeck.isInDeck)
+    const cardMinted = await Contract.methods.addCardInDeck(Id).send({ from: currentAccount})
+    refreshCards();
   }
 
-  const startABattle = async(ply1, ply2) => {
+  const removeCardInDeck = async(Id) => {
+    await Contract.methods.removeCardInDeck(Id).send({ from: currentAccount})
+    refreshCards();
+  }
 
-    const battle = await Contract.methods._cardBattle(ply1,ply2).send({from : currentAccount})
-    const NumberWins = await getWinsByOwner(ply1);
-    console.log("Nombre win du currentAccount : ", NumberWins);
-   
+  const startABattle = async(ply1) => {
+
+    const battle = await Contract.methods._cardBattle(ply1).send({from : currentAccount})
+    const NumberWins = await getWinsByOwner(ply1);   
  }
+
+ const balanceOf = async (owner) => {
+   const balance = await Contract.methods.ownerOf(owner);
+   console.log(balance);
+ }
+
+ const TransferCard = async (Id) => {
+  const transfer =  await Contract.methods.transferFrom(currentAccount, '0xD1e1267E24F2Bd6372038A90c24620Eb730d3E29', 0).send({from : currentAccount});
+  console.log(transfer);
+  refreshCards();
+  }
+
+  const battleApproval = async (address) => {
+    await Contract.methods.approve(address, 0).send({from : currentAccount});
+  }
 
 
   /*    Website elements that call functions    */
@@ -90,32 +178,31 @@ function App(){
           
         )
       }
-  const getCardsByOwnerButton  = () => {
+  const TransferButton  = () => {
         return (
-          <button onClick={getCardsByOwner.bind(null, currentAccount)} className='cta-button connect-wallet-button'>
-           CardsByOwner
+          <button onClick={TransferCard} className='cta-button connect-wallet-button'>
+           TransferCard
           </button>
           
         )
       }
   const getCardDetailsButton  = () => {
         return (
-          <button onClick={getCardDetails.bind(null, 2)} className='cta-button connect-wallet-button'>
-           CardDetails
+          <button onClick={refreshCards} className='cta-button connect-wallet-button'>
+           Display Cards
           </button>
         )
       }
-   const addCardInDeckButton = () => {
+   const ApprovalButton = () => {
         return (
-          <button onClick={addCardInDeck.bind(null, 2)} className='cta-button connect-wallet-button'>
-            addCardInDeck
+          <button onClick={ battleApproval.bind(null, '0xD1e1267E24F2Bd6372038A90c24620Eb730d3E29')} className='cta-button connect-wallet-button'>
+            Approve
           </button>
-          
         )
       }
     const startABattletButton = () => {
         return (
-          <button onClick={startABattle.bind(null, currentAccount, currentAccount)} className='cta-button connect-wallet-button'>
+          <button onClick={startABattle.bind(null,'0x5f1E76918B1494096993eac732Fe826f4129759c')} className='cta-button connect-wallet-button'>
             Battle
           </button>
           
@@ -130,15 +217,14 @@ function App(){
 
    // Render de la page   
     return (
-        <div className="container">
-          <h1> Welcome to Barricity</h1>
+        <div className="container"> 
+        <Header/>
           {connectWalletButton()}
           {MintNewCardButton()}
-          {getCardsByOwnerButton()}
+          {TransferButton()}
           {getCardDetailsButton()}
-          {addCardInDeckButton()}
+          {ApprovalButton()}
           {startABattletButton()}
-          <p> {numberOfCards}</p>
         </div>
       );
      }
