@@ -18,12 +18,5 @@ Game progress :
 
 
 Matchmaking : Each card has a value defined by its numerical value. The value of a player's chosen deck is calculated by adding up the values of his 10 cards. The player only plays against players whose deck has a similar value. 
-
-Functions to code :
-  choose_cards
-  card_shuffle
-  card_battle
-  choose_won_card
-  
   
 
