@@ -25,7 +25,5 @@ Functions to code :
   card_battle
   choose_won_card
   
-Créer les tokens (Qui gagne les recettes de la mise en vente ?)
-  
   
 
